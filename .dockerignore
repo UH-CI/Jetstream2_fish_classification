@@ -1,0 +1,31 @@
+# Exclude large dataset directories from Docker image
+# akbank-fish-classification datasets
+akbank-fish-classification/Fish_Dataset
+Fish_Dataset.zip
+
+# Maritime Traffic geodata
+Maritime Traffic/GulfOfMexico.gdb
+Maritime Traffic/Harvey track points, lines, radii, windswath (shapefiles)
+
+# Fish Habitat data directories
+Fish Habitat Suitability Modeling/SEAMAPDATAV3CSV
+Fish Habitat Suitability Modeling/data
+Fish Habitat Suitability Modeling/figures
+Fish Habitat Suitability Modeling/shapefile-reef-fish-efh-gomex-sero
+
+# Exclude model outputs and preprocessed data
+clusters
+model_dataset
+models
+preprocessed_images
+preprocessed_images_embeddings
+
+# macOS artifacts
+__MACOSX
+.DS_Store
+
+# Git history
+.git
+
+# Jupyter checkpoints
+.ipynb_checkpoints
