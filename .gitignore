@@ -168,3 +168,8 @@ model_dataset
 models
 preprocessed_images
 preprocessed_images_embeddings
+
+# Large data files - included in VM image, not in Git
+Maritime Traffic/
+Fish Habitat Suitability Modeling/SEAMAPDATAV3CSV/
+__MACOSX/

@@ -1,14 +1,51 @@
-FROM tensorflow/tensorflow:2.16.1-gpu-jupyter
+FROM nvcr.io/nvidia/tensorflow:22.04-tf2-py3
+RUN pip install --no-cache-dir jupyterhub==3.0.0
+RUN pip install --no-cache-dir --upgrade jupyterlab notebook jupyter_server
 
-# Install system dependencies for OpenCV
-RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    && rm -rf /var/lib/apt/lists/*
+# Copy and install requirements
+COPY requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Install Python packages
-RUN pip install --no-cache-dir \
-    numpy pandas matplotlib seaborn Pillow \
-    opencv-python scikit-learn tqdm scipy
+# Initialization of user copied from:
+# https://github.com/jupyter/docker-stacks/blob/main/docker-stacks-foundation/Dockerfile
 
-WORKDIR /tf/notebooks
+ARG NB_USER="jovyan"
+ARG NB_UID="1000"
+ARG NB_GID="100"
+
+# Fix: https://github.com/hadolint/hadolint/wiki/DL4006
+# Fix: https://github.com/koalaman/shellcheck/wiki/SC3014
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+USER root
+
+COPY fix-permissions /usr/local/bin/fix-permissions
+RUN chmod a+rx /usr/local/bin/fix-permissions
+
+ENV HOME="/home/${NB_USER}"
+
+# Enable prompt color in the skeleton .bashrc before creating the default NB_USER
+# hadolint ignore=SC2016
+RUN sed -i 's/^#force_color_prompt=yes/force_color_prompt=yes/' /etc/skel/.bashrc
+
+# Create NB_USER with name jovyan user with UID=1000 and in the 'users' group
+# and make sure these dirs are writable by the `users` group.
+# Add groups for GPU access: video and vglusers (GID 1002 to match host)
+RUN echo "auth requisite pam_deny.so" >> /etc/pam.d/su && \
+    groupadd -g 1002 vglusers && \
+    useradd -l -m -s /bin/bash -N -u "${NB_UID}" -G video,vglusers "${NB_USER}" && \
+    chmod g+w /etc/passwd && \
+    fix-permissions "${HOME}"
+
+USER ${NB_UID}
+
+# Copy all contents from current directory to jovyan's home
+COPY --chown=${NB_UID}:${NB_GID} . ${HOME}/
+
+WORKDIR "${HOME}"
+
+# Expose Jupyter port
+EXPOSE 8888
+
+# Start JupyterLab
+CMD ["jupyter", "lab", "--ip=0.0.0.0", "--port=8888", "--no-browser"]
